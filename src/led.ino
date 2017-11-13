@@ -5,6 +5,12 @@
  * Date:
  */
 
+ #include "rgb-controls/rgb-controls.h"
+ using namespace RGBControls;
+
+ // RGB led on PWN pins
+ Led led(D1, D2, D3); // red_pin = D0, green_pin = D1, blue_pin = D2
+
  // We will be using D1 to control our LED
  int ledPin = D0;
 
