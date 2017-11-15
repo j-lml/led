@@ -9,18 +9,20 @@
  using namespace RGBControls;
 
  // RGB led on PWN pins
- Led led(D1, D2, D3); // red_pin = D0, green_pin = D1, blue_pin = D2
+ //Led led(D1, D2, D3); // red_pin = D0, green_pin = D1, blue_pin = D2
 
  // We will be using D1 to control our LED
- int ledPin = D0;
+ int pinLed = D0;
+ int pinSensor = D4;
+ int pinDoor = D5;
+ int pinDoorBell = D6;
 
- // Our button wired to D0
- int buttonPin = D5;
 
 // D0, D1, D2, D3, => analogWrite para el photon
  int pinRed = D1;                // LED connected to digital pin D1
  int pinGreen = D2;              // LED connected to digital pin D1
  int pinBlue = D3;               // LED connected to digital pin D1
+
 
  //int analogPin = A0;            // potentiometer connected to analog pin A0
  int colRed = 0;                // variable to store the read value
@@ -60,9 +62,12 @@
    // pushbutton as an input-pullup
    // this uses an internal pullup resistor
    // to manage consistent reads from the device
-   pinMode( buttonPin , INPUT_PULLUP); // sets pin as input
+   pinMode( pinDoor , INPUT_PULLUP); // sets pin as input
+   pinMode( pinSensor , INPUT_PULLUP); // sets pin as input
+   pinMode( pinDoorBell , INPUT_PULLUP); // sets pin as input
+
    // We also want to use the LED
-   pinMode( ledPin , OUTPUT ); // sets pin as output
+   pinMode( pinLed , OUTPUT ); // sets pin as output
 
    pinMode(pinRed, OUTPUT);     // sets the pin as output
    pinMode(pinGreen, OUTPUT);     // sets the pin as output
@@ -74,28 +79,46 @@
    Particle.function("setcolor",setColor);
    // This is saying that when we ask the cloud for the function "led", it will employ the function ledToggle() from this app.
    // For good measure, let's also make sure both LEDs are off when we start:
-   digitalWrite(ledPin, LOW);
+   digitalWrite(pinLed, LOW);
 
  }
 
+
+ bool isDoorOpen = false;
+ bool hasDetection = false;
+ bool isRinging = false;
+
 void loop() {
-    // find out if the button is pushed
-    // or not by reading from it.
-    int buttonState = digitalRead( buttonPin );
-    // remember that we have wired the pushbutton to
-    // ground and are using a pulldown resistor
-    // that means, when the button is pushed,
-    // we will get a LOW signal
-    // when the button is not pushed we'll get a HIGH
-    // let's use that to set our LED on or off
-    if( buttonState == LOW ) {
-        // turn the LED On
-        //digitalWrite( ledPin, HIGH);
-    } else{
-        // otherwise
-        // turn the LED Off
-        //digitalWrite( ledPin, LOW);
+    //LECTURA DE ESTADOS
+    isDoorOpen = digitalRead(pinDoor);
+    hasDetection = !digitalRead(pinSensor);
+    isRinging = !digitalRead(pinDoorBell);
+
+
+    //MOSTRAR INFO EN LED
+    if (isRinging==true) {
+      ledToggle("on");
+    } else {
+      ledToggle("off");
     }
+
+/*
+    //MOSTRAR INFO EN LED
+    if (isDoorOpen==true) {
+      ledToggle("on");
+    } else {
+      ledToggle("off");
+    }
+
+    //MOSTRAR INFO EN LED
+    if (hasDetection==true) {
+      ledToggle("on");
+    } else {
+      ledToggle("off");
+    }
+*/
+
+
 }
 
 
@@ -120,8 +143,6 @@ int setColor(String command)    {
     return -1;
 }
 
-
-
 // We're going to have a super cool function now that gets called when a matching API request is sent
 // This is the ledToggle function we registered to the "led" Particle.function earlier.
 int ledToggle(String command) {
@@ -133,11 +154,11 @@ int ledToggle(String command) {
      and -1 if we received a totally bogus command that didn't do anything to the LEDs.
      */
      if (command=="on") {
-         digitalWrite(ledPin,HIGH);
+         digitalWrite(pinLed,HIGH);
          return 1;
      }
      else if (command=="off") {
-         digitalWrite(ledPin,LOW);
+         digitalWrite(pinLed,LOW);
          return 0;
      }
      else {
