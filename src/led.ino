@@ -75,51 +75,99 @@
 
 
    // We are also going to declare a Particle.function so that we can turn the LED on and off from the cloud.
+   //hasta 15!!
    Particle.function("led",ledToggle);
    Particle.function("setcolor",setColor);
+   Particle.function("getstatus",getStatus);
+
    // This is saying that when we ask the cloud for the function "led", it will employ the function ledToggle() from this app.
    // For good measure, let's also make sure both LEDs are off when we start:
    digitalWrite(pinLed, LOW);
 
  }
 
+    bool _oldDoor=false;;
+    bool _oldDetection=false;
+    bool _oldRing=false;;
 
- bool isDoorOpen = false;
- bool hasDetection = false;
- bool isRinging = false;
-
-void loop() {
-    //LECTURA DE ESTADOS
-    isDoorOpen = digitalRead(pinDoor);
-    hasDetection = !digitalRead(pinSensor);
-    isRinging = !digitalRead(pinDoorBell);
+    bool _isDoorOpen = false;
+    bool _hasDetection = false;
+    bool _isRinging = false;
 
 
-    //MOSTRAR INFO EN LED
-    if (isRinging==true) {
-      ledToggle("on");
-    } else {
-      ledToggle("off");
+    void door_onchange() {
+        if (_isDoorOpen==true) {
+            Particle.publish("door", "true", 60, PRIVATE);
+        } else {
+            Particle.publish("door", "false", 60, PRIVATE);
+        }
     }
 
-/*
-    //MOSTRAR INFO EN LED
-    if (isDoorOpen==true) {
-      ledToggle("on");
-    } else {
-      ledToggle("off");
+    void bell_onchange() {
+        if (_isRinging==true) {
+            Particle.publish("bell", "true", 60, PRIVATE);
+        } else {
+            Particle.publish("bell", "false", 60, PRIVATE);
+        }
     }
 
-    //MOSTRAR INFO EN LED
-    if (hasDetection==true) {
-      ledToggle("on");
-    } else {
-      ledToggle("off");
+    //unsigned long time = millis();
+    void detect_onchange() {
+        if (_hasDetection==true) {
+            Particle.publish("presence", "true", 60, PRIVATE);
+        } else {
+            Particle.publish("presence", "false", 60, PRIVATE);
+        }
     }
-*/
+
+    void loop() {
+        //LECTURA DE ESTADOS
+        _isDoorOpen = digitalRead(pinDoor);
+        _hasDetection = !digitalRead(pinSensor);
+        _isRinging = !digitalRead(pinDoorBell);
+
+        //LANZAR EVENTOS
+        if (_oldDoor != _isDoorOpen) {
+            door_onchange();
+            _oldDoor = _isDoorOpen;
+        }
+
+        if (_oldDetection != _hasDetection) {
+            detect_onchange();
+            _oldDetection = _hasDetection;
+        }
+
+        if (_oldRing != _isRinging) {
+            bell_onchange();
+            _oldRing = _isRinging;
+        }
 
 
-}
+        //MOSTRAR INFO EN LED
+        if (_isRinging==true) {
+            ledToggle("on");
+        } else {
+            ledToggle("off");
+        }
+
+    /*
+        //MOSTRAR INFO EN LED
+        if (isDoorOpen==true) {
+          ledToggle("on");
+        } else {
+          ledToggle("off");
+        }
+
+        //MOSTRAR INFO EN LED
+        if (hasDetection==true) {
+          ledToggle("on");
+        } else {
+          ledToggle("off");
+        }
+    */
+
+
+    }
 
 
 
@@ -164,4 +212,20 @@ int ledToggle(String command) {
      else {
          return -1;
      }
+}
+
+
+bool getStatus(String command) {
+    bool st=false;
+    if (command=="door") {
+        st=_isDoorOpen;
+    }
+    if (command=="bell") {
+        st=_isRinging;
+    }
+    if (command=="presence") {
+        st=_hasDetection;
+    }
+
+     return st;
 }
